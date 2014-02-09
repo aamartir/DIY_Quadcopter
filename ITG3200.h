@@ -108,7 +108,7 @@
 #define PLL_EXTERNAL32      4   // 32.768 kHz
 #define PLL_EXTERNAL19      5   // 19.2 Mhz
 
-//#define SMOOTH_GYRO_DATA
+#define SMOOTH_GYRO_DATA
 
 #ifdef SMOOTH_GYRO_DATA
 #define SMOOTH_FACTOR       0.80
