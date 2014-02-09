@@ -147,10 +147,12 @@ void setup()
   Gyro.init(ITG3200_ADDR_AD0_LOW);
   delay(5);
   Gyro.zeroCalibrate(500, 10); 
+  delay(10);
   Serial.println("OK");
 
   Serial.print("Powering Compass... ");
   Compass.init();
+  delay(10);
   Serial.println("OK");
 
   Serial.print("Initializing Kalman filters... "); 
