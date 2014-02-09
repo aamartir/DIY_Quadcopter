@@ -9,15 +9,15 @@ enum
 {
   LED_TIMER,
   RADIO_TIMER,
-  SPEAKER_TIMER,
   MOTOR_TIMER,
-  DEBUG_TIMER,
   
   MAX_TIMERS
 };
 
-#define LED_TIMER_PERIOD     1    /* milliseconds */
-#define RADIO_TIMER_PERIOD   1000 /* milliseconds */
+/* milliseconds */
+#define LED_TIMER_PERIOD     1   
+#define RADIO_TIMER_PERIOD   100 
+#define MOTOR_TIMER_PERIOD   20
 
 /* Timer object creates events that execute (interrupt based) every so often */
 class Timer
@@ -40,22 +40,17 @@ public:
 
 extern Timer led_timer;
 extern Timer radio_timer;
-extern Timer speaker_timer;
 extern Timer motor_timer;
-extern Timer debug_timer;
 
 extern void timer_routine();
 extern void led_timer_handler(void);
 extern void radio_timer_handler(void);
-extern void speaker_timer_handler(void);
 extern void motor_timer_handler(void);
-extern void debug_timer_handler(void);
 
 extern Timer *Timers[];
 extern uint16 TIMER_ISR_LAST_MS;
 
 #endif
-
 
 
 
