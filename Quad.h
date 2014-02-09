@@ -24,8 +24,21 @@
 
 #define BAUD           115200
 #define LEDPIN         13
+
 #define ON             1
 #define OFF            0
+
+/* Quad Modes (Not masks) */
+#define QUAD_NORMAL_MODE        0
+#define QUAD_ACCRO_MODE         1
+#define QUAD_ALT_HOLD_MODE      2
+#define QUAD_GPS_HOLD_MODE      3
+#define QUAD_AUTOLAND_MODE      4
+#define QUAD_AUTO_TAKEOFF_MODE  5
+
+/* Motors armed, disarmed */
+#define MOTORS_DISARMED     0
+#define MOTORS_ARMED        1
 
 /* ===================== MOTORS ========================== */
 
@@ -49,10 +62,13 @@
 
 /* ======================================================= */
 
-/* Sonar */
-#define SONAR_PIN      4 /* Digital pin PB4 (Note: port B, not port D!) */
+/* ===================== SONAR =========================== */
+
+#define SONAR_PIN      4 /* Digital pin PB4 (12) (Note: port B, not port D!) */
 #define SONAR_PIN_MASK (1 << SONAR_PIN)
 
+/* ======================================================= */
+ 
 /* LED pins */
 #define BLUE_LED_PIN   5 /* Digital pin PD5 */
 #define RED_LED_PIN    6 /* Digital pin PD6 */
@@ -95,6 +111,12 @@ typedef struct _motor_node
   uint8 done;
 } MOTOR_NODE;
 
+typedef struct _quad
+{
+  uint8 quad_mode;    /* NORMAL_MODE(0), ACCRO_MODE(1), ALTITUDE_HOLD(2), GPS_HOLD(3), AUTOLAND(4) */
+  uint8 motors_armed; /* MOTORS_DISARMED(0), MOTORS_ARMED(1) */
+} QUAD_STATE;
+
 /* Keep track of global time */
 extern double dt_ms; 
 extern double dt_sec;
@@ -111,6 +133,8 @@ extern unsigned int sonar_last_ms;
 
 /* Autoland feature */
 extern volatile uint8 autoLand;
+extern QUAD_STATE quad;
+extern uint16 throttle;
 
 extern void RadioFrameInterrupt();
 extern void setupTimerInterrupt();
