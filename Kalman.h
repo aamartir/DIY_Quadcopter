@@ -36,9 +36,9 @@ public:
   
   void initialize()
   {
-      Q_angle = 0.0001; //0.001 ----- 0.0001
-      Q_gyro = 0.0003; //0.003 ---- 0.0003
-      R_angle = 50.0; // 0.3 = 30
+      Q_angle = 0.001; //0.001 ----- 0.0001
+      Q_gyro = 0.003; //0.003 ---- 0.0003
+      R_angle = 1.5; 
   }
   
   double getGyroBias(byte axis) 
@@ -54,10 +54,10 @@ public:
   void calculate(byte axis, double newAngle, double newRate, double G_dt) 
   {
       x_angle[axis] += G_dt * (newRate - x_bias[axis]);
-      P_00[axis] +=  - G_dt * (P_10[axis] + P_01[axis]) + Q_angle * G_dt;
-      P_01[axis] +=  - G_dt * P_11[axis];
-      P_10[axis] +=  - G_dt * P_11[axis];
-      P_11[axis] +=  + Q_gyro * G_dt;
+      P_00[axis]    += G_dt * (P_11[axis] * G_dt - P_10[axis] - P_01[axis] + Q_angle);
+      P_01[axis]    -= G_dt * P_11[axis];
+      P_10[axis]    -= G_dt * P_11[axis];
+      P_11[axis]    += Q_gyro * G_dt;
       
       y = newAngle - x_angle[axis];
       S = P_00[axis] + R_angle;
