@@ -19,14 +19,16 @@
 //#define SONAR_DEBUG            1
 //#define ALTITUDE_CONTROL_TEST  1
 //#define ESC_CALIBRATION        1
-//#define MOTOR_VIBRATION_TEST    1
+//#define MOTOR_VIBRATION_TEST   1
+//#define RADIO_TEST             1
 
 #ifdef MOTOR_VIBRATION_TEST
 uint8 motor_counter;
 uint16 motors_last_value[MOTORS];
 #endif  
 
-// #define RADIO_TEST              1
+void printAccelData();
+void printSensorData();
 
 /* Sensor data */
 double accel_data[3];
@@ -35,6 +37,7 @@ double compass_data[3];
 double kalman_data[3];
 
 /* Objects */
+QUAD_STATE quad;
 ADXL345 Accel;// = ADXL345();
 ITG3200 Gyro;// = ITG3200();
 HMC5883L Compass;// = HMC5883L();
@@ -57,9 +60,7 @@ LEDManager led_manager;
 /* Timers */
 Timer led_timer(&led_timer_handler);
 Timer radio_timer(&radio_timer_handler);
-Timer speaker_timer(&speaker_timer_handler);
 Timer motor_timer(&motor_timer_handler);
-Timer debug_timer(&debug_timer_handler);
 
 unsigned long previousTime = 0;
 unsigned long currentTime  = 0;
@@ -89,22 +90,20 @@ double headingIncr;
 float PID_out_alt; 
 
 #ifdef USE_SONAR
-float sonar_altitude;
-float sonar_alt_last;
-float target_altitude;
-float error_alt;      /* Error */
-float error_int_alt;  /* Error Integration */
-float error_last_alt; /* Error rate of change */
-float error_alt_der;
-float sonar_alt_der;
-float sonar_error;
+  float sonar_altitude;
+  float sonar_alt_last;
+  float target_altitude;
+  float error_alt;      /* Error */
+  float error_int_alt;  /* Error Integration */
+  float error_last_alt; /* Error rate of change */
+  float error_alt_der;
+  float sonar_alt_der;
+  float sonar_error;
 #endif
 
 float tmp;
 
-unsigned int throttle;
-//unsigned int throttle_last;
-volatile uint8 autoLand;
+uint16 throttle;
 
 /////////////////////////////////////////////
 MOTOR_NODE motors[MOTORS];
@@ -123,7 +122,11 @@ void setup()
   Serial.begin(BAUD); 
   Wire.begin();
   configurePINS();
-
+  
+  /* Initialize Quad state */
+  quad.quad_mode = QUAD_NORMAL_MODE;
+  quad.motors_armed = MOTORS_DISARMED;
+  
   //Serial.println("Initializing... ");
   for(int i = 0; i < 10; i++)
   {
@@ -144,17 +147,14 @@ void setup()
   Gyro.init(ITG3200_ADDR_AD0_LOW);
   delay(5);
   Gyro.zeroCalibrate(500, 10); 
-  delay(10);
   Serial.println("OK");
 
   Serial.print("Powering Compass... ");
   Compass.init();
-  delay(10);
   Serial.println("OK");
 
   Serial.print("Initializing Kalman filters... "); 
   kalman.initialize();
-  delay(10);
   Serial.println("OK"); 
 #endif
 
@@ -173,8 +173,7 @@ void setup()
   ////////////////////
 
 #ifdef MOTOR_VIBRATION_TEST
-  motor_counter = 2;
-  motors_last_value[0] = MOTOR_MIN; 
+  motor_counter = 2 
   motors_last_value[1] = MOTOR_MIN;
   motors_last_value[2] = MOTOR_MIN;
   motors_last_value[3] = MOTOR_MIN;
@@ -190,9 +189,6 @@ void setup()
   error_int[0] = 0;
   error_int[1] = 0;
   error_int[2] = 0;
-
-  /* Autoland feature */
-  //autoLand = 0;
 
   // Configure TIMER1 to start generating proper PWM signals
   cli();
@@ -224,8 +220,7 @@ void setup()
   gpio_clear(BLUE_LED_PIN);
 
   // Setup LED Timer 
-  //led_timer.setTimerVal(1000);
-  led_manager.setCurrentPattern(&simple_on_off_pattern, BLUE_LED_PIN);
+  led_manager.setCurrentPattern( &motors_disarmed_pattern, BLUE_LED_PIN );
  
   // last time (for timing control) 
   last_us = micros();
@@ -260,19 +255,60 @@ void loop()
   dt_sec = dt_ms/1000.0;
   last_us = micros();
 
-  // Read Pilot commands at 20 Hz
-  //if(last_us/1000.0 >= receiverTime + RECEIVER_LOOPTIME_MS)
-  //{
-  /* Only read if receiver data is ready */
+  /* Read radio commands */
   if( radio.data_ready )
   {
     radio.readReceiverData();
-    //print_PWM_SIGNALS();
+    
+    /* ARM motors if following joystick positions are satisfied:
+     * LEFT JOYSTICK: DOWN and to the LEFT completely
+     * RIGHT JOYSTICK: UP and to the RIGHT completely
+     */
+    if( quad.motors_armed == MOTORS_DISARMED )
+    {
+      if( radio.data_rdy_buffer[RADIO_ROLL_CH]     >= (ROLL_MAX - 100) &&
+          radio.data_rdy_buffer[RADIO_PITCH_CH]    >= (PITCH_MAX - 100) &&
+          radio.data_rdy_buffer[RADIO_THROTTLE_CH] <= (THTLE_MIN + 100) && 
+          radio.data_rdy_buffer[RADIO_YAW_CH]      <= (YAW_MIN + 100) )
+      {
+        quad.motors_armed = MOTORS_ARMED;
+        
+        /* Change LED pattern */
+        led_manager.setCurrentPattern( &simple_on_off_pattern, BLUE_LED_PIN );
+      }
+    }
+    else
+    {
+      /* If autoland was enabled due to radio signal lost, 
+         once signal is available again, disable autoland */
+      if( quad.quad_mode == QUAD_AUTOLAND_MODE )
+      {
+        quad.quad_mode = QUAD_NORMAL_MODE;
+        
+        /* Change LED pattern */
+        led_manager.setCurrentPattern( &simple_on_off_pattern, BLUE_LED_PIN );
+      }
+    }
   }
+  else if( radio.state & RADIO_SIGNAL_LOST )
+  {
+    /* Set motor timer to start decreasing throttle */
+    if( quad.quad_mode != QUAD_AUTOLAND_MODE )
+    {
+      quad.quad_mode = QUAD_AUTOLAND_MODE;
+      motor_timer.setTimerVal( MOTOR_TIMER_PERIOD );
+      
+      /* Change LED pattern */
+      led_manager.setCurrentPattern( &_1_2_3_pattern, BLUE_LED_PIN );
+    }
+    /* Once throttle is 0, Disengage motors until radio signal is stable again */
+    else if( throttle <= (MOTOR_MIN + 100) )
+    {
+      quad.motors_armed = MOTORS_DISARMED;
+    }
+  }
+  
 
-  // Read sensors at 500 Hz
-  //if(currentTime >= sensorTime + SENSOR_LOOPTIME_US)
-  //{
   /* Read sensors */
 
   /* Read accelerometer */
@@ -299,25 +335,26 @@ void loop()
 #ifdef USE_SONAR
   if(abs(gyro_data[Gyro.Zaxis()]) > 2.5 && (throttle >= QUAD_HOVER || sonar_altitude >= MIN_SONAR_DISTANCE /* inches*/ )) /* Eliminate some gyro noise */
 #else
-    if(abs(gyro_data[Gyro.Zaxis()]) > 2.5 && (throttle >= QUAD_HOVER)) /* Eliminate some gyro noise */
+  if(abs(gyro_data[Gyro.Zaxis()]) > 1.5 && (throttle >= QUAD_HOVER)) /* Eliminate some gyro noise */
 #endif
-    {
-      Compass.heading += gyro_data[Gyro.Zaxis()]*dt_sec; /* Gyro-only orientation */
-    }
+  {
+    Compass.heading += gyro_data[Gyro.Zaxis()]*dt_sec; /* Gyro-only orientation */
+  }
 
   //    if(Compass.heading < -PI)
   //      Compass.heading += _2_PI;
   //    else if(Compass.heading > PI)
   //      Compass.heading -= _2_PI;
   //}
-  //else if(Compass.isDataReady()) /* Otherwise just use compass */
-  //{
-  //  Compass.getHeading_tiltCompensate(kalman.getAngle(kalman.Xaxis()),   /* Kalman X axis */
-  //                                    kalman.getAngle(kalman.Yaxis()));  /* Kalman Y axis */
+  //if(Compass.isDataReady()) /* Otherwise just use compass */
+  {
+    //Compass.getHeading_tiltCompensate(kalman.getAngle(kalman.Xaxis()),   /* Kalman X axis */
+    //                                  kalman.getAngle(kalman.Yaxis()));  /* Kalman Y axis */
 
-  /* Calculate Kalman for YAW */
-  //kalman.calculate(kalman.Zaxis(), Compass.heading, gyro_data[Gyro.Zaxis()], dt_sec);
-  //}
+    /* Calculate Kalman for YAW */
+    //kalman.calculate(kalman.Zaxis(), Compass.heading, gyro_data[Gyro.Zaxis()], dt_sec);
+    //Compass.readScaledAxis();
+  }
 
   //if(abs(target[YAW]) > 0 || throttle < QUAD_MIN_HOVER)
   //     gyro.setHeading(0);
@@ -357,7 +394,7 @@ void loop()
                                   MAX_SONAR_DISTANCE);
 
     /* Constrain target altitude */
-    target_altitude = constrain(target_altitude, MIN_SONAR_DISTANCE, MAX_SONAR_DISTANCE);  
+    target_altitude = constrain( target_altitude, MIN_SONAR_DISTANCE, MAX_SONAR_DISTANCE );  
 
     //error_last_alt = error[ALTITUDE];  /* Save previous error */
     //error[ALTITUDE] = target_altitude - sonar_altitude; /* New error */
@@ -392,14 +429,14 @@ void loop()
 //#ifdef IGNORE
   /* Start integrating the errors if the 
    * throttle is above the dead-zone. */
-  if( throttle > MOTOR_MIN + MOTORS_DEAD_ZONE )
+  if( throttle > QUAD_HOVER )
   {
      error_int[ROLL]  += error[ROLL] * dt_sec;
      error_int[PITCH] += error[PITCH] * dt_sec;
      
      /* Constrain integration error */
-     error_int[ROLL]  = (float) constrain( error_int[ROLL], -500.0, 500.0 );
-     error_int[PITCH] = (float) constrain( error_int[PITCH], -500.0, 500.0 );
+     error_int[ROLL]  = (float) constrain( error_int[ROLL], -2000.0, 2000.0 );
+     error_int[PITCH] = (float) constrain( error_int[PITCH], -2000.0, 2000.0 );
   }
   else
   {
@@ -425,27 +462,10 @@ void loop()
   /* Constrain altitude control */
   PID_out[ALTITUDE] = constrain( PID_out[ALTITUDE], -250, 1000 );
 #endif 
-
-  // Set Motor commands to minimum if no throttle
-  /*if(autoLand)
-   {
-   if(throttle >= MOTOR_MIN && (now_ms - autoland_timer_last) >= 500)
-   {
-     throttle--;
-     autoland_timer_last = millis();
-   }
-   }*/
    
   if((throttle <= MOTOR_MIN + MOTORS_DEAD_ZONE) || throttle > (MOTOR_MAX << 1))
   {
-    /*if(autoLand)
-     {
-     autoLand = false;
-     radio.retry_attempts = SYNCH_ATTEMPTS;
-     gpio_clear(RED_LED_PIN);
-     }*/
-
-    /* Clear completely, may save some power. This creates close 0 volts since duty% = 0, thus saving battery life (I think...) */
+    /* Clear completely, may save some power. This creates close 0 volts since duty % = 0, thus saving battery life (I think...) */
     motors[0].pwm = MOTOR_MIN;
     motors[1].pwm = MOTOR_MIN;
     motors[2].pwm = MOTOR_MIN;
@@ -466,7 +486,8 @@ void loop()
     Compass.heading = 0;
     targetHeading = 0;
   }
-  else if(throttle <= MOTOR_MAX) /* Here's the Motor control algorithm */
+  else if( quad.motors_armed == MOTORS_ARMED &&
+           throttle <= MOTOR_MAX ) /* Here's the Motor control algorithm */
   { 
   #ifdef MOTOR_VIBRATION_TEST
     motors[motor_counter].pwm = throttle;
@@ -503,15 +524,11 @@ void loop()
   //controlTime = currentTime;
   //}
 
-#ifdef NEVER
-  Serial.print(throttle);
-  Serial.print("\t");
-  printSensorData();
-  delay(10);
-#endif
-
-  //Serial.println(dt_ms);
   //radio.printRadio();
+  
+  //printAccelData();
+  //printSensorData();
+  //delay(5);
 }
 
 void printAccelData()
@@ -521,24 +538,28 @@ void printAccelData()
    Serial.print(Accel.acceleration[1]);
    Serial.print("\t");
    Serial.println(Accel.acceleration[2]);
-   //Serial.print("\t");
-   //Serial.print(kalman.getAngle(kalman.Yaxis()));
 }
 
 void printSensorData()
 {
-  Serial.print(kalman.getAngle(kalman.Xaxis()));
-  Serial.print("\t");
-  Serial.print(kalman.getAngle(kalman.Yaxis()));
-  Serial.println();
-   
-  /*Serial.print(TO_DEGREES(Accel.angle[Accel.Xaxis()]));
-   Serial.print("\t");
-   Serial.print(kalman.getAngle(kalman.Xaxis()));
-   Serial.print("\t");
-   Serial.print(TO_DEGREES(Accel.angle[Accel.Yaxis()]));
-   Serial.print("\t");
-   Serial.print(kalman.getAngle(kalman.Yaxis()));
+  #ifdef IGNORE
+  Serial.print(kalman.getAngle(kalman.Zaxis()));
+  Serial.print(" ");
+  Serial.println(Compass.heading);
+  #endif
+  
+  //#ifdef IGNORE
+  
+  //Serial.print(" ");
+  //Serial.println(kalman.getAngle(kalman.Yaxis()));
+  //#endif
+  
+  Serial.print(Accel.angle[Accel.Xaxis()]);
+  Serial.print(" ");
+  Serial.print(gyro_data[Gyro.Xaxis()]);
+  Serial.print(" ");
+  Serial.println(kalman.getAngle(kalman.Xaxis()));
+  
    //Serial.print("\t");
    //Serial.print(motorPWM[motor_counter]);
    //Serial.print("\t");
@@ -556,11 +577,23 @@ void printSensorData()
    Serial.print("\t");
    Serial.print(PID_out[YAW]);
    Serial.println("\t");*/
-  /*Serial.print(gyro_data[Gyro.Xaxis()]);
+   
+   #ifdef IGNORE
+   Serial.print(degrees(Accel.angle[Accel.Xaxis()]));
+   Serial.print("\t");
+   Serial.print(degrees(Accel.angle[Accel.Yaxis()]));
+   Serial.print("\t");
+   Serial.println(degrees(Accel.acceleration[Accel.Zaxis()]));
+   #endif
+   
+   #ifdef IGNORE
+   Serial.print(gyro_data[Gyro.Xaxis()]);
    Serial.print("\t");
    Serial.print(gyro_data[Gyro.Yaxis()]);
    Serial.print("\t");
-   Serial.print(gyro_data[Gyro.Zaxis()]);
+   Serial.println(gyro_data[Gyro.Zaxis()]);
+   #endif
+   
    //Serial.print("\t");
   /*Serial.print(Compass.heading); 
    Serial.print("\t");
@@ -688,7 +721,7 @@ void timer2_setup()
 }
 
 /* Timer 2 Overflow interrupt routine */
-ISR(TIMER2_OVF_vect)  /* Executes every millisecond. Routine has to execute fairly quickly, and when I say fairly I mean REALLY quickly. */
+ISR( TIMER2_OVF_vect )  /* Executes every millisecond. Routine has to execute fairly quickly, and when I say fairly I mean REALLY quickly. */
 {  
   /* For all timers */
   uint8 t;
@@ -711,6 +744,40 @@ ISR(TIMER2_OVF_vect)  /* Executes every millisecond. Routine has to execute fair
   }
 }
 
+volatile uint8 sonar_pin_last;
+volatile uint8 barometer_pin_last;
+
+ISR( PCINT0_vect ) /* PCINT0_vect (handles portB PCINT) */
+{
+  #ifdef USE_BAROMETER
+  if( ((PINB >> BAROMETER_PIN) & 0x01) != barometer_pin_last )
+  {
+    // ...
+    
+    barometer_pin_last = (PINB >> BAROMETER_PIN) & 0x01;
+  }
+  #endif
+  
+  #ifdef USE_SONAR
+  if( ((PINB >> SONAR_PIN) & 0x01) != sonar_pin_last )
+  {
+    if( (PINB & SONAR_PIN_MASK) > 0 )
+    {
+      sonar.setStartTime(micros());
+      sonar.setSonarState(SONAR_PULSE_START); 
+    }
+    else if( sonar.getSonarState() == SONAR_PULSE_START ) /* Look for SONAR_PULSE_START */
+    {
+      sonar.setEchoTime(micros()); /* micros() - start_time */
+      sonar.setSonarState(SONAR_DATA_AVAIL); /* Measurement found */
+    }
+    
+    /* Save state of last pin */
+    sonar_pin_last = PINB >> SONAR_PIN) & 0x01;
+  }
+  #endif
+}
+  
 uint16 TIM16_ReadTCNT1( void )
 {
   uint8 sreg;
@@ -784,6 +851,5 @@ void gpio_value(uint8 val, uint8 pin)
   else 
     gpio_clear(pin);
 }
-
 
 
