@@ -92,7 +92,7 @@
 #define READ_ERROR 1 // problem reading accel
 #define BAD_ARG    2 // bad method argument
 
-//#define SMOOTH_ACCEL_DATA
+#define SMOOTH_ACCEL_DATA
 
 #ifdef SMOOTH_ACCEL_DATA
 #define SMOOTH_FACTOR 0.80 
