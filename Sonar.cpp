@@ -115,18 +115,21 @@ uint16 Sonar::getEchoTime(void)
   return echo_time;
 }
 
-ISR(PCINT0_vect)
-{
-  if( (PINB & SONAR_PIN_MASK) > 0 )
+#ifdef IGNORE /* Function defined somewhere else to account for Barometer PCINT as well */
+  ISR(PCINT0_vect)
   {
-    sonar.setStartTime(micros());
-    sonar.setSonarState(SONAR_PULSE_START); 
+    if( (PINB & SONAR_PIN_MASK) > 0 )
+    {
+      sonar.setStartTime(micros());
+      sonar.setSonarState(SONAR_PULSE_START); 
+    }
+    else if( sonar.getSonarState() == SONAR_PULSE_START ) /* Look for SONAR_PULSE_START */
+    {
+      sonar.setEchoTime(micros()); /* micros() - start_time */
+      sonar.setSonarState(SONAR_DATA_AVAIL); /* Measurement found */
+    }
   }
-  else if( sonar.getSonarState() == SONAR_PULSE_START ) /* Look for SONAR_PULSE_START */
-  {
-    sonar.setEchoTime(micros()); /* micros() - start_time */
-    sonar.setSonarState(SONAR_DATA_AVAIL); /* Measurement found */
-  }
-}
+#endif
+
 
 #endif
