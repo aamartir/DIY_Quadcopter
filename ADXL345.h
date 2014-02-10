@@ -70,12 +70,9 @@
 #define INT_WATERMARK_BIT  0x01
 #define INT_OVERRUNY_BIT   0x00
 
-#define OK    1 // no error
-#define ERROR 0 // indicates error is predent
-
-#define NO_ERROR   0 // initial state
-#define READ_ERROR 1 // problem reading accel
-#define BAD_ARG    2 // bad method argument
+#define OK         0   // no error
+#define READ_ERROR 1   // problem reading accel
+#define BAD_ARG    2   // bad method argument
 
 #define SMOOTH_ACCEL_DATA
 #ifdef SMOOTH_ACCEL_DATA
@@ -90,10 +87,8 @@
 class ADXL345
 {
 public:
-  bool initialized;
-  bool status;           // set when error occurs 
+  int8 status;          // set when error occurs 
                          // see error code for details
-  uint8 error_code;       // Initial state
   
   int raw[3];
   int offset[3];
