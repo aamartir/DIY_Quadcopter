@@ -184,10 +184,7 @@ void ADXL345::setRate(double rate)
 
 void ADXL345::set_bw(uint8 bw_code){
   if((bw_code < BW_3) || (bw_code > BW_1600))
-  {
-    status = false;
-    error_code = BAD_ARG;
-  }
+    status = BAD_ARG;
   else{
     i2c.mem_write(DEVICE_ID, BW_RATE_REG, bw_code);
   }
