@@ -19,10 +19,11 @@ ADXL345::ADXL345()
 {
   status = OK;
   error_code = NO_ERROR;
-
+  
+  /* These are empirical values that map accel raw values to +/-1g on all axis */
   gains[0] = 0.00376390;
-  gains[1] = 0.00376009;
-  gains[2] = 0.00349265;
+  gains[1] = 0.00373134;
+  gains[2] = 0.00396825;
 }
 
 void ADXL345::powerOn() 
@@ -32,7 +33,12 @@ void ADXL345::powerOn()
   i2c.mem_write(DEVICE_ID, POWER_CTL_REG, 16);
   i2c.mem_write(DEVICE_ID, POWER_CTL_REG, 8); 
   delay(50);
-  set_bw(BW_1600); /* Set bandwidth */
+  
+  set_bw(BW_400); /* Set bandwidth */
+  delay(10);
+  
+  /* Set axis offsets (Empirical values) */
+  setAxisOffset( -4, 0, 5 );
   
   /* Configure axis signs */
   sign[X_axis] =  1; 
@@ -171,7 +177,8 @@ void ADXL345::setRate(double rate)
   {
     r++;
   }
-  if (r <= 9) { 
+  if (r <= 9) 
+  { 
     i2c.mem_read(DEVICE_ID, BW_RATE_REG, 1, &_b);
     _s = (uint8) (r + 6) | (_b & B11110000);
     i2c.mem_write(DEVICE_ID, BW_RATE_REG, _s);
@@ -193,34 +200,6 @@ uint8 ADXL345::get_bw_code(){
   uint8 bw_code;
   i2c.mem_read(DEVICE_ID, BW_RATE_REG, 1, &bw_code);
   return bw_code;
-}
-
-// print all register value to the serial ouptut, which requires it to be setup
-// this can be used to manually to check the current configuration of the device
-void ADXL345::printAllRegister() {
-  uint8 _b;
-  Serial.print("0x00: ");
-  i2c.mem_read(DEVICE_ID, 0x00, 1, &_b);
-  print_byte(_b);
-  Serial.println("");
-  int i;
-  for (i=29;i<=57;i++)
-  {
-    Serial.print("0x");
-    Serial.print(i, HEX);
-    Serial.print(": ");
-    i2c.mem_read(DEVICE_ID, i, 1, &_b);
-    print_byte(_b);
-    Serial.println("");    
-  }
-}
-
-void print_byte(byte val){
-  int i;
-  Serial.print("B");
-  for(i=7; i>=0; i--){
-    Serial.print(val >> i & 1, BIN);
-  }
 }
 
 void ADXL345::getAngleRad(double *accel_data, double *angles)
