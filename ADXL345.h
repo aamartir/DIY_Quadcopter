@@ -1,22 +1,7 @@
-/**************************************************************************
- *                                                                         *
- * ADXL345 Driver for Arduino                                              *
- *                                                                         *
- ***************************************************************************
- *                                                                         * 
- * This program is free software; you can redistribute it and/or modify    *
- * it under the terms of the GNU License.                                  *
- * This program is distributed in the hope that it will be useful,         *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU License V2 for more details.                                        *
- *                                                                         *
- ***************************************************************************/
 #ifndef ADXL345_h
 #define ADXL345_h
 
 #include "I2C.h"
-//#include "Quad.h"
 
 #define DEVICE_ID 0x53    // ADXL345 device address
 
@@ -93,7 +78,6 @@
 #define BAD_ARG    2 // bad method argument
 
 #define SMOOTH_ACCEL_DATA
-
 #ifdef SMOOTH_ACCEL_DATA
 #define SMOOTH_FACTOR 0.80 
 #endif
@@ -110,12 +94,14 @@ public:
   bool status;           // set when error occurs 
                          // see error code for details
   uint8 error_code;       // Initial state
-  double gains[3];       // counts to Gs
-  int sign[3];
   
   int raw[3];
+  int offset[3];
   double acceleration[3]; /* Compensated */
+  double gains[3];       // counts to Gs
+  
   double angle[3];
+  int sign[3];
   
   ADXL345();
   void powerOn();
@@ -138,7 +124,6 @@ public:
   
   bool getFullResBit();
   void setFullResBit(bool fullResBit);
-  void printAllRegister();
 
   int Xaxis();
   int Yaxis();
