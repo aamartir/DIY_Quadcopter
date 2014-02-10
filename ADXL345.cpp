@@ -17,9 +17,6 @@
 
 ADXL345::ADXL345() 
 {
-  status = OK;
-  error_code = NO_ERROR;
-  
   /* These are empirical values that map accel raw values to +/-1g on all axis */
   gains[0] = 0.00376390;
   gains[1] = 0.00373134;
@@ -45,7 +42,7 @@ void ADXL345::powerOn()
   sign[Y_axis] = -1;
   sign[Z_axis] =  1;
   
-  initialized = 1;
+  status = OK;
 }
 
 void ADXL345::readAccel() 
