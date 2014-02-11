@@ -3,9 +3,9 @@
 #define PID_I_TERM 1
 #define PID_D_TERM 2
  
-const float PID_gains_roll[3]     = {60.0, 30.0, 15.0}; // {60.0, 20.0, 15.0};
-const float PID_gains_pitch[3]    = {60.0, 30.0, 15.0};  //
-const float PID_gains_yaw[3]      = {80.0, 0, 40.0}; // {80.0, 0, 50.0};
+const float PID_gains_roll[3]     = {35.0, 30.0, 20.0}; // {60.0, 20.0, 15.0};
+const float PID_gains_pitch[3]    = {35.0, 30.0, 20.0};  //
+const float PID_gains_yaw[3]      = {50.0, 0, 40.0}; // {80.0, 0, 50.0};
 
 //#ifdef USE_SONAR
   const float PID_gains_alt[3]    = {0.5, 0.2, -0.2}; /* Sonar */
