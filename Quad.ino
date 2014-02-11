@@ -14,6 +14,7 @@
 #include "Radio_PCINT.h"
 #include "Sonar.h"
 
+//#define QUAD_DEBUG             1
 //#define ISR_DEBUG              1
 //#define USE_SONAR              1
 //#define SONAR_DEBUG            1
@@ -119,7 +120,10 @@ volatile uint8 cnt2;
 
 void setup()
 {   
+#ifdef QUAD_DEBUG
   Serial.begin(BAUD); 
+#endif
+
   Wire.begin();
   configurePINS();
   
