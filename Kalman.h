@@ -36,9 +36,9 @@ public:
   
   void initialize()
   {
-      Q_angle = 0.001; //0.001 ----- 0.0001
-      Q_gyro = 0.003; //0.003 ---- 0.0003
-      R_angle = 1.5; 
+      Q_angle = 0.0001; //0.001 ----- 0.0001
+      Q_gyro = 0.0003; //0.003 ---- 0.0003
+      R_angle = 15.0; 
   }
   
   double getGyroBias(byte axis) 
