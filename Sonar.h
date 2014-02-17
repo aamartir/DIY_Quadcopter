@@ -58,9 +58,9 @@
 class Sonar
 {
   private:
-    volatile uint8 sonar_state;
-    volatile uint16 start_time;
-    volatile uint16 echo_time;
+    volatile uint8_t sonar_state;
+    volatile uint16_t start_time;
+    volatile uint16_t echo_time;
     
     float altitude;
     float last_altitude;
@@ -76,16 +76,16 @@ class Sonar
       void sonarPulse(void);
     #endif
     
-    void setStartTime(uint16 val);
-    void setEchoTime(uint16 val);
+    void setStartTime(uint16_t val);
+    void setEchoTime(uint16_t val);
     
-    uint16 getEchoTime(void);
+    uint16_t getEchoTime(void);
     float getSonarAltitude( float coef, float dt );
-    void setSonarState(uint8 newState);
-    uint8 getSonarState(void);
-    uint8 isSonarDataAvailable(void);
+    void setSonarState(uint8_t newState);
+    uint8_t getSonarState(void);
+    uint8_t isSonarDataAvailable(void);
     
-    uint8 isActive(void);
+    uint8_t isActive(void);
 };
 
 extern Sonar sonar;

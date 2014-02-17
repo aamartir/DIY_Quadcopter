@@ -54,20 +54,20 @@
 class Radio_PCINT
 {
 public:
-  volatile uint8 chCounter;
-  volatile uint16 data_rdy_buffer[RADIO_MAX_CHANNELS];
-  volatile uint16 radio_data[RADIO_MAX_CHANNELS]; 
+  volatile uint8_t chCounter;
+  volatile uint16_t data_rdy_buffer[RADIO_MAX_CHANNELS];
+  volatile uint16_t radio_data[RADIO_MAX_CHANNELS]; 
   
-  volatile uint16 state;
-  volatile uint8 retry_attempts;
-  volatile uint8 data_ready;
+  volatile uint16_t state;
+  volatile uint8_t retry_attempts;
+  volatile uint8_t data_ready;
 
   Radio_PCINT();
   void init();
   void readReceiverData( void );
-  void setState( uint8 newState );
-  uint8 getState( void );
-  uint8 radioIsSynched( void );
+  void setState( uint8_t newState );
+  uint8_t getState( void );
+  uint8_t radioIsSynched( void );
   
   void printRadio( void );
 };
@@ -75,8 +75,8 @@ public:
 extern Radio_PCINT radio;
 
 //#ifdef DEBUG_PPM_SIGNAL
-//  extern volatile uint8 debug_data_rdy;
-//  extern volatile uint16 debug_buf[BUFFER_SIZE][2];
+//  extern volatile uint8_t debug_data_rdy;
+//  extern volatile uint16_t debug_buf[BUFFER_SIZE][2];
 //#endif
 
 #endif

@@ -70,11 +70,14 @@
 #define INT_WATERMARK_BIT  0x01
 #define INT_OVERRUNY_BIT   0x00
 
-#define OK         0   // no error
-#define READ_ERROR 1   // problem reading accel
-#define BAD_ARG    2   // bad method argument
+#define OK    1 // no error
+#define ERROR 0 // indicates error is predent
 
-#define SMOOTH_ACCEL_DATA
+#define NO_ERROR   0 // initial state
+#define READ_ERROR 1 // problem reading accel
+#define BAD_ARG    2 // bad method argument
+
+//#define SMOOTH_ACCEL_DATA
 #ifdef SMOOTH_ACCEL_DATA
 #define SMOOTH_FACTOR 0.80 
 #endif
@@ -87,8 +90,10 @@
 class ADXL345
 {
 public:
-  int8 status;          // set when error occurs 
+  bool initialized;
+  bool status;           // set when error occurs 
                          // see error code for details
+  uint8_t error_code;       // Initial state
   
   int raw[3];
   int offset[3];
@@ -111,10 +116,10 @@ public:
 
   double getRate();
   void setRate(double rate);
-  void set_bw(uint8 bw_code);
-  uint8 get_bw_code();  
+  void set_bw(uint8_t bw_code);
+  uint8_t get_bw_code();  
 
-  void getRangeSetting(uint8* rangeSetting);
+  void getRangeSetting(uint8_t* rangeSetting);
   void setRangeSetting(int val);
   
   bool getFullResBit();
@@ -125,11 +130,11 @@ public:
   int Zaxis();
   
 private:
-  void setRegisterBit(uint8 regAdress, int bitPos, bool state);
-  bool getRegisterBit(uint8 regAdress, int bitPos);  
-  uint8 _buff[6];    // 6 bytes buffer for saving data read from the device
+  void setRegisterBit(uint8_t regAdress, int bitPos, bool state);
+  bool getRegisterBit(uint8_t regAdress, int bitPos);  
+  uint8_t _buff[6];    // 6 bytes buffer for saving data read from the device
 };
 
-void print_byte(uint8 val);
+void print_byte(uint8_t val);
 
 #endif

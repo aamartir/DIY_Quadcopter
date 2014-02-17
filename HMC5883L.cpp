@@ -34,19 +34,16 @@ HMC5883L::HMC5883L()
 
 void HMC5883L::init()
 {
-  delay(100);
+  //setNumberOfSamplesAveraged(8);
+  //delay(50);
   
-  setNumberOfSamplesAveraged(8);
-  delay(50);
+  //setScale(SCALE_1_3);
+  //delay(50);
   
-  setScale(SCALE_1_3);
-  delay(50);
-  
-  setDataOutputRate(RATE_75_HZ);
-  delay(50);
-  
+  setDataOutputRate(RATE_15_HZ);
   setMeasurementMode(CONTINUOUS);
-  delay(6);
+  
+  delay(10);
   
   /* Calibrate scale and offsets per axis */
   setMagCal(X_axis, 0, 1);
@@ -56,8 +53,8 @@ void HMC5883L::init()
 
 void HMC5883L::readRawAxis(int *buf)
 {
-  uint8 tmp[6];
-  i2c.mem_read(DEVICE_ID, DATA_OUT_REG, 6, tmp);
+  uint8_t tmp[6];
+  I2C::readBytes(DEVICE_ID, DATA_OUT_REG, 6, tmp);
   
   buf[0] = (((int) tmp[0]) << 8) | tmp[1]; /* x axis */
   buf[1] = (((int) tmp[2]) << 8) | tmp[3]; /* y axis */
@@ -68,7 +65,7 @@ void HMC5883L::readScaledAxis()
 {
   int raw[3];
   readRawAxis(raw);
-  
+ 
   /* Scale and calibrate */
   #ifdef SMOOTH_DATA_COMPASS
     scaled[X_axis] = SMOOTH_FACTOR*scaled[X_axis] + (1-SMOOTH_FACTOR)*(raw[X_axis] - offset[X_axis])*magScale[X_axis];
@@ -84,7 +81,7 @@ void HMC5883L::readScaledAxis()
 void HMC5883L::getHeading_tiltCompensate(double rollAngleDeg /* x axis */, double pitchAngleDeg /*y axis */)
 {
   readScaledAxis(); /* Populate in array and store in scaled[...] */
-
+  
   /* Swap accelerometer axis */
   float roll = TO_RADIANS(rollAngleDeg);
   float pitch = TO_RADIANS(pitchAngleDeg);
@@ -113,13 +110,13 @@ void HMC5883L::getHeading_tiltCompensate(double rollAngleDeg /* x axis */, doubl
     /* Normalized components */
     Hx = tiltCompensated[X_axis] / mag;
     Hy = -tiltCompensated[Y_axis] / mag;
-    
-    heading = atan2(Hy, Hy);
+
+    heading = TO_DEGREES(atan2(Hy, Hx));
         
   #else 
-    tiltCompensated[X_axis] = scaled[X_axis]*cosRoll + /*1.5*/scaled[Z_axis]*sinRoll;
+    tiltCompensated[X_axis] = scaled[X_axis]*cosRoll + scaled[Z_axis]*sinRoll;
     tiltCompensated[Z_axis] = -scaled[X_axis]*sinRoll + scaled[Z_axis]*cosRoll;
-    tiltCompensated[Y_axis] = scaled[Y_axis]*cosPitch + /*1.5*/tiltCompensated[Z_axis]*sinPitch;
+    tiltCompensated[Y_axis] = scaled[Y_axis]*cosPitch + tiltCompensated[Z_axis]*sinPitch;
     tiltCompensated[Z_axis] = -scaled[Y_axis]*sinPitch + tiltCompensated[Z_axis]*cosPitch;
 
     heading = atan2(tiltCompensated[Y_axis], tiltCompensated[X_axis]);
@@ -148,14 +145,12 @@ void HMC5883L::setMagCal(byte axis, float minVal, float maxVal)
 
 bool HMC5883L::isDataReady() 
 {
-  uint8 val;
-  i2c.mem_read(DEVICE_ID, STATUS_REG, 1, &val);
-  return (val & RDY_BIT);
+  return (I2C::read8(DEVICE_ID, STATUS_REG ) & RDY_BIT);
 }
 
 int HMC5883L::setScale(double gauss)
 {
-  uint8 regValue = 0x00;
+  uint8_t regValue = 0x00;
   if(gauss <= 0.89)
   {
     regValue = 0x00;
@@ -201,7 +196,7 @@ int HMC5883L::setScale(double gauss)
 	
   // Setting is in the top 3 bits of the register.
   regValue = (regValue << 5);
-  i2c.mem_write(DEVICE_ID, CRB_REG, regValue);
+  I2C::write8(DEVICE_ID, CRB_REG, regValue);
 }
 
 void HMC5883L::setGain(double val)
@@ -216,19 +211,19 @@ void HMC5883L::setGains(double gain_x, double gain_y, double gain_z)
   gains[Z_axis] = gain_z;
 }
 
-int HMC5883L::setMeasurementMode(uint8 mode)
+int HMC5883L::setMeasurementMode(uint8_t mode)
 {
-  i2c.mem_write(DEVICE_ID, MODE_REG, mode);
+  I2C::write8(DEVICE_ID, MODE_REG, mode);
 }
 
-void HMC5883L::setDataOutputRate(uint8 rate)
+void HMC5883L::setDataOutputRate(uint8_t rate)
 {
-  uint8 _s;
-  i2c.mem_read(DEVICE_ID, CRA_REG, 1, &_s);
+  uint8_t _s;
+  _s = I2C::read8( DEVICE_ID, CRA_REG );
   _s &= ~(0x1C); /* Reset bits Dout_2 to Dout_0*/
   
   _s |= (rate << 2);
-  i2c.mem_write(DEVICE_ID, CRA_REG, _s);
+  I2C::write8(DEVICE_ID, CRA_REG, _s);
 }
 
 /* Possible values: 
@@ -237,11 +232,11 @@ void HMC5883L::setDataOutputRate(uint8 rate)
  * 0x10 = 4 samples
  * 0x11 = 8 samples
 */
-void HMC5883L::setNumberOfSamplesAveraged(uint8 samples)
+void HMC5883L::setNumberOfSamplesAveraged(uint8_t samples)
 {
-  uint8 _conf;
-  uint8 _s;
-  i2c.mem_read(DEVICE_ID, CRA_REG, 1, &_s);
+  uint8_t _conf;
+  uint8_t _s;
+  _s = I2C::read8( DEVICE_ID, CRA_REG );
   
   /* Reset bits MA1 to MA0 */
   _s &= ~(0x60);
@@ -270,7 +265,7 @@ void HMC5883L::setNumberOfSamplesAveraged(uint8 samples)
   }
   
   _s |= (_conf << 5);
-  i2c.mem_write(DEVICE_ID, CRA_REG, _s);
+  I2C::write8(DEVICE_ID, CRA_REG, _s);
 }
 
 double HMC5883L::getHeadingDegrees(double *data)

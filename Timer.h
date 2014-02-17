@@ -23,19 +23,19 @@ enum
 class Timer
 {
 private:
-  uint8 id;
+  uint8_t id;
 public:
   Timer();
   Timer(FPTR fptr);
 
-  void setTimerVal(uint16 val);
+  void setTimerVal(uint16_t val);
   void clearTimer(void);
-  uint16 getTimerValue(void);
+  uint16_t getTimerValue(void);
 
   /* Public access variables */
-  volatile uint16 val;
+  volatile uint16_t val;
   FPTR fptr;
-  static uint8 timersActive;
+  static uint8_t timersActive;
 };
 
 extern Timer led_timer;
@@ -48,9 +48,10 @@ extern void radio_timer_handler(void);
 extern void motor_timer_handler(void);
 
 extern Timer *Timers[];
-extern uint16 TIMER_ISR_LAST_MS;
+extern uint16_t TIMER_ISR_LAST_MS;
 
 #endif
+
 
 
 

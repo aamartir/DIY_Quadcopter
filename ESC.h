@@ -6,7 +6,7 @@
 
 #define MOTORS 4
 #define MOTOR_MIN 15000
-#define MOTOR_MAX 28000 
+#define MOTOR_MAX 26000 //30000 
 #define QUAD_HOVER 20000
 #define MOTOR_MAX_MINUS_MIN (MOTOR_MAX - MOTOR_MIN)
 
@@ -24,6 +24,6 @@ extern volatile unsigned short motorIndexB;
  * Pulse width:     1ms         1.5ms        2ms
  */
 
-extern volatile unsigned int motorPWM[MOTORS];
+extern volatile uint16_t motorPWM[MOTORS];
 
 #endif

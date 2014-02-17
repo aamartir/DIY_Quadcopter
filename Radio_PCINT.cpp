@@ -1,3 +1,14 @@
+/* Comments/Change Log section 
+ *
+ * 10/01/2014  -  Added mechanism to detect when radio signal is lost (See Timer.cpp). 
+ *             -  Added a really bad Autoland algorithm that is enabled when radio signal is lost. 
+ *                There's no altitude feedback control, which is really, really bad. Will update later.
+ *
+ *
+ *
+ *  
+ */
+
 #include <Arduino.h>
 #include <stdio.h>
 #include <avr/io.h>
@@ -7,12 +18,12 @@
 #include "CONTROL_PARAMS.h"
 #include "Timer.h"
 
-void radioFrameInterrupt(uint8 port);
+void radioFrameInterrupt(uint8_t port);
 
 #ifdef DEBUG_PPM_SIGNAL
-  volatile uint16 debug_buf[BUFFER_SIZE][2];
-  volatile uint16 debug_cnt;
-  volatile uint8 debug_data_rdy;
+  volatile uint16_t debug_buf[BUFFER_SIZE][2];
+  volatile uint16_t debug_cnt;
+  volatile uint8_t debug_data_rdy;
 #endif
 
 /* Constructor */
@@ -40,17 +51,17 @@ void Radio_PCINT::init()
   retry_attempts    = RADIO_SYNCH_ATTEMPTS;
 }
 
-uint8 Radio_PCINT::getState()
+uint8_t Radio_PCINT::getState()
 {
   return state;
 }
 
-void Radio_PCINT::setState( uint8 newState )
+void Radio_PCINT::setState( uint8_t newState )
 {
   state = newState;
 }
 
-uint8 Radio_PCINT::radioIsSynched()
+uint8_t Radio_PCINT::radioIsSynched()
 {
   return (state & RADIO_SYNCHED);
 }
@@ -76,16 +87,16 @@ void Radio_PCINT::readReceiverData()
     }
     
     /* Map buffer values to actual numbers we will use in the control algorithm */
-    target[ROLL]  = map(data_rdy_buffer[RADIO_ROLL_CH],     ROLL_MIN,  ROLL_MAX,  -45, 	       45);     // ROLL
-    target[PITCH] = map(data_rdy_buffer[RADIO_PITCH_CH],    PITCH_MIN, PITCH_MAX, -45,         45);     // PITCH
+    target[ROLL]  = map(data_rdy_buffer[RADIO_ROLL_CH],     ROLL_MIN,  ROLL_MAX,  -30, 	       30);     // ROLL
+    target[PITCH] = map(data_rdy_buffer[RADIO_PITCH_CH],    PITCH_MIN, PITCH_MAX, -30,         30);     // PITCH
     throttle      = map(data_rdy_buffer[RADIO_THROTTLE_CH], THTLE_MIN, THTLE_MAX,  MOTOR_MIN,  MOTOR_MAX); // THROTTLE
     
     /* Yaw is a bit different. It will be mapped to a floating point value for more precision */
     headingIncr   = mapToDouble((double) data_rdy_buffer[RADIO_YAW_CH],    
                                 (double) YAW_MIN,   
                                 (double) YAW_MAX,    
-                                -10.0f,         
-                                 10.0f);     
+                                -5.0f,         
+                                 5.0f);     
  
     //throttle = constrain(throttle, MOTOR_MIN, MOTOR_MAX); 
     if(throttle > (MOTOR_MAX << 1) || (throttle < MOTOR_MIN))
@@ -109,12 +120,12 @@ void Radio_PCINT::readReceiverData()
   }
 }
 
-volatile uint32 time_last;
-volatile uint32 time_new;
-volatile uint16 diff;
-volatile uint8 frameStarted;
-volatile uint8 pin_state;
-volatile uint8 last_pin_state = 0;
+volatile uint32_t time_last;
+volatile uint32_t time_new;
+volatile uint16_t diff;
+volatile uint8_t frameStarted;
+volatile uint8_t pin_state;
+volatile uint8_t last_pin_state = 0;
 
 /* Before you get depressed if the code/thing does NOT work, 
  * Make sure that RADIO_MAX_CHANNELS has the correct value! */
@@ -204,7 +215,7 @@ ISR( PCINT2_vect )
 
 void Radio_PCINT::printRadio( void )
 {
-  uint8 ch;
+  uint8_t ch;
   
   for( ch = 0; ch < RADIO_MAX_CHANNELS; ch++ )
   {
@@ -214,3 +225,4 @@ void Radio_PCINT::printRadio( void )
   
   Serial.println();
 }
+

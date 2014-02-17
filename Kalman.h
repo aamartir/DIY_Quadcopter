@@ -22,7 +22,7 @@ private:
 public:
   Kalman() 
   {
-      for(int axis = 0; axis <= 2; axis++)
+      for( int axis = 0; axis <= 2; axis++ )
       {
           x_angle[axis] = 0;
           x_bias[axis] = 0;
@@ -36,9 +36,14 @@ public:
   
   void initialize()
   {
+     /*
+      * Bigger Q_angle: trust accelerometer more
+      * Bigger Q_gyro: trust Gyro more
+      */
+      
       Q_angle = 0.0001; //0.001 ----- 0.0001
       Q_gyro = 0.0003; //0.003 ---- 0.0003
-      R_angle = 15.0; 
+      R_angle = 20; //1.719; // 0.3 = 30
   }
   
   double getGyroBias(byte axis) 
@@ -53,19 +58,27 @@ public:
   
   void calculate(byte axis, double newAngle, double newRate, double G_dt) 
   {
+      /* Linear Stochastic Model equation */
       x_angle[axis] += G_dt * (newRate - x_bias[axis]);
-      P_00[axis]    += G_dt * (P_11[axis] * G_dt - P_10[axis] - P_01[axis] + Q_angle);
+      
+      /* Calculate Covariance Matrix */
+      P_00[axis]    += G_dt * (P_11[axis]*G_dt - P_10[axis] - P_01[axis] + Q_angle);
       P_01[axis]    -= G_dt * P_11[axis];
       P_10[axis]    -= G_dt * P_11[axis];
       P_11[axis]    += Q_gyro * G_dt;
       
+      /* Measurement */
       y = newAngle - x_angle[axis];
       S = P_00[axis] + R_angle;
-      K_0 = P_00[axis] / S;
+      
+      /*  Calculate Kalman gains */
+      K_0 = P_00[axis] / S; 
       K_1 = P_10[axis] / S;
       
+      /* Correction */
       x_angle[axis] +=  K_0 * y;
       x_bias[axis]  +=  K_1 * y;
+      
       P_00[axis] -= K_0 * P_00[axis];
       P_01[axis] -= K_0 * P_01[axis];
       P_10[axis] -= K_1 * P_00[axis];

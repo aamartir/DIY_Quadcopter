@@ -97,10 +97,10 @@ class HMC5883L
     double getHeadingDegrees(double *data);
     
     void init(void);
-    void setDataOutputRate(uint8 rate); 
-    void setNumberOfSamplesAveraged(uint8 samples);
-    void readRegister(uint8 addr, uint8 *reg);
-    int setMeasurementMode(uint8 mode);
+    void setDataOutputRate(uint8_t rate); 
+    void setNumberOfSamplesAveraged(uint8_t samples);
+    void readRegister(uint8_t addr, uint8_t *reg);
+    int setMeasurementMode(uint8_t mode);
     int setScale(double gauss);
     bool isDataReady(void);
     

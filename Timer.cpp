@@ -23,7 +23,7 @@ Timer::Timer(FPTR ptr)
   fptr = ptr;
 }
 
-void Timer::setTimerVal(uint16 newVal)
+void Timer::setTimerVal(uint16_t newVal)
 {
   val = newVal;
 }
@@ -33,7 +33,7 @@ void Timer::clearTimer(void)
   val = 0;
 }
 
-uint16 Timer::getTimerValue(void)
+uint16_t Timer::getTimerValue(void)
 {
   return val; 
 }

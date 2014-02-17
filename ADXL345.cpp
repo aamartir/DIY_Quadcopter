@@ -17,6 +17,9 @@
 
 ADXL345::ADXL345() 
 {
+  status = OK;
+  error_code = NO_ERROR;
+  
   /* These are empirical values that map accel raw values to +/-1g on all axis */
   gains[0] = 0.00376390;
   gains[1] = 0.00373134;
@@ -26,9 +29,9 @@ ADXL345::ADXL345()
 void ADXL345::powerOn() 
 {
   /* Turning on the ADXL345 */
-  i2c.mem_write(DEVICE_ID, POWER_CTL_REG, 0);      
-  i2c.mem_write(DEVICE_ID, POWER_CTL_REG, 16);
-  i2c.mem_write(DEVICE_ID, POWER_CTL_REG, 8); 
+  I2C::write8(DEVICE_ID, POWER_CTL_REG, 0);      
+  I2C::write8(DEVICE_ID, POWER_CTL_REG, 16);
+  I2C::write8(DEVICE_ID, POWER_CTL_REG, 8); 
   delay(50);
   
   set_bw(BW_400); /* Set bandwidth */
@@ -42,12 +45,12 @@ void ADXL345::powerOn()
   sign[Y_axis] = -1;
   sign[Z_axis] =  1;
   
-  status = OK;
+  initialized = 1;
 }
 
 void ADXL345::readAccel() 
 {
-  i2c.mem_read(DEVICE_ID, DATAX0_REG, 6, _buff); //read the acceleration data from the ADXL345
+  I2C::readBytes( DEVICE_ID, DATAX0_REG, 6, _buff ); //read the acceleration data from the ADXL345
 
   // each axis reading comes in 10 bit resolution, ie 2 bytes.  Least Significat Byte first!!
   // thus we are converting both bytes in to one int
@@ -74,16 +77,18 @@ void ADXL345::readAccel()
 
 // Gets the range setting and return it into rangeSetting
 // it can be 2, 4, 8 or 16
-void ADXL345::getRangeSetting(uint8* rangeSetting) {
-  uint8 _b;
-  i2c.mem_read(DEVICE_ID, DATA_FORMAT_REG, 1, &_b);
+void ADXL345::getRangeSetting(uint8_t * rangeSetting) 
+{
+  uint8_t _b;
+  _b = I2C::read8( DEVICE_ID, DATA_FORMAT_REG );
   *rangeSetting = _b & B00000011;
 }
 
 // Sets the range setting, possible values are: 2, 4, 8, 16
-void ADXL345::setRangeSetting(int val) {
-  uint8 _s;
-  uint8 _b;
+void ADXL345::setRangeSetting(int val) 
+{
+  uint8_t _s;
+  uint8_t _b;
 
   switch (val) {
   case 2:  
@@ -101,14 +106,16 @@ void ADXL345::setRangeSetting(int val) {
   default: 
     _s = B00000000;
   }
-  i2c.mem_read(DEVICE_ID, DATA_FORMAT_REG, 1, &_b);
+  
+  _b = I2C::read8( DEVICE_ID, DATA_FORMAT_REG );
   _s |= (_b & B11101100);
-  i2c.mem_write(DEVICE_ID, DATA_FORMAT_REG, _s);
+  I2C::write8( DEVICE_ID, DATA_FORMAT_REG, _s );
 }
 
 // Gets the state of the FULL_RES bit
-bool ADXL345::getFullResBit() {
-  return getRegisterBit(DATA_FORMAT_REG, 3);
+bool ADXL345::getFullResBit() 
+{
+  return I2C::readBit( DEVICE_ID, DATA_FORMAT_REG, 3 );
 }
 
 // Sets the FULL_RES bit
@@ -116,18 +123,22 @@ bool ADXL345::getFullResBit() {
 //   g range set by the range bits to maintain a 4mg/LSB scal factor
 // if set to 0, the device is in 10-bit mode, and the range buts determine the maximum g range
 //   and scale factor
-void ADXL345::setFullResBit(bool fullResBit) {
-  setRegisterBit(DATA_FORMAT_REG, 3, fullResBit);
+void ADXL345::setFullResBit(bool fullResBit) 
+{
+  I2C::writeBit( DEVICE_ID, DATA_FORMAT_REG, 3, fullResBit );
 }
 
 // set/get the gain for each axis in Gs / count
-void ADXL345::setAxisGains(double *_gains){
+void ADXL345::setAxisGains(double *_gains)
+{
   int i;
   for(i = 0; i < 3; i++){
     gains[i] = _gains[i];
   }
 }
-void ADXL345::getAxisGains(double *_gains){
+
+void ADXL345::getAxisGains(double *_gains)
+{
   int i;
   for(i = 0; i < 3; i++){
     _gains[i] = gains[i];
@@ -141,59 +152,68 @@ void ADXL345::getAxisGains(double *_gains){
 // OFSX, OFSY and OFSZ should be comprised between 
 void ADXL345::setAxisOffset(int x, int y, int z) 
 {
-  i2c.mem_write(DEVICE_ID, OFSX_REG, (byte) x);  
-  i2c.mem_write(DEVICE_ID, OFSY_REG, (byte) y);  
-  i2c.mem_write(DEVICE_ID, OFSZ_REG, (byte) z);  
+  I2C::write8(DEVICE_ID, OFSX_REG, (byte) x);  
+  I2C::write8(DEVICE_ID, OFSY_REG, (byte) y);  
+  I2C::write8(DEVICE_ID, OFSZ_REG, (byte) z);  
 }
 
 // Gets the OFSX, OFSY and OFSZ bytes
 void ADXL345::getAxisOffset(int* x, int* y, int*z) 
 {
-  uint8 _b;
-  i2c.mem_read(DEVICE_ID, OFSX_REG, 1, &_b);  
+  uint8_t _b;
+  _b = I2C::read8( DEVICE_ID, OFSX_REG );  
   *x = int (_b);
-  i2c.mem_read(DEVICE_ID, OFSY_REG, 1, &_b);  
+  
+  _b = I2C::read8(DEVICE_ID, OFSY_REG );  
   *y = int (_b);
-  i2c.mem_read(DEVICE_ID, OFSZ_REG, 1, &_b);  
+  
+  _b = I2C::read8(DEVICE_ID, OFSZ_REG );  
   *z = int (_b);
 }
 
-double ADXL345::getRate(){
-  uint8 _b;
-  i2c.mem_read(DEVICE_ID, BW_RATE_REG, 1, &_b);
+double ADXL345::getRate()
+{
+  uint8_t _b;
+  _b = I2C::read8( DEVICE_ID, BW_RATE_REG );
   _b &= B00001111;
   return (pow(2,((int) _b)-6)) * 6.25;
 }
 
 void ADXL345::setRate(double rate)
 {
-  uint8 _b,_s;
+  uint8_t _b,_s;
+  
   int v = (int) (rate / 6.25);
   int r = 0;
+  
   while (v >>= 1)
   {
     r++;
   }
   if (r <= 9) 
   { 
-    i2c.mem_read(DEVICE_ID, BW_RATE_REG, 1, &_b);
-    _s = (uint8) (r + 6) | (_b & B11110000);
-    i2c.mem_write(DEVICE_ID, BW_RATE_REG, _s);
+    _b = I2C::read8( DEVICE_ID, BW_RATE_REG );
+    _s = (uint8_t) (r + 6) | (_b & B11110000);
+    I2C::write8(DEVICE_ID, BW_RATE_REG, _s);
   }
 }
 
-void ADXL345::set_bw(uint8 bw_code){
+void ADXL345::set_bw(uint8_t bw_code)
+{
   if((bw_code < BW_3) || (bw_code > BW_1600))
-    status = BAD_ARG;
-  else{
-    i2c.mem_write(DEVICE_ID, BW_RATE_REG, bw_code);
+  {
+    status = false;
+    error_code = BAD_ARG;
+  }
+  else
+  {
+    I2C::write8( DEVICE_ID, BW_RATE_REG, bw_code );
   }
 }
 
-uint8 ADXL345::get_bw_code(){
-  uint8 bw_code;
-  i2c.mem_read(DEVICE_ID, BW_RATE_REG, 1, &bw_code);
-  return bw_code;
+uint8_t ADXL345::get_bw_code()
+{
+  return I2C::read8( DEVICE_ID, BW_RATE_REG );
 }
 
 void ADXL345::getAngleRad(double *accel_data, double *angles)
@@ -206,8 +226,8 @@ void ADXL345::getAngleRad(double *accel_data, double *angles)
 void ADXL345::getAngleDegrees(double *accel_data, double *angles)
 {
   getAngleRad(accel_data, angles);
-  angles[X_axis] = angles[X_axis] * _180_OVER_PI;
-  angles[Y_axis] = angles[Y_axis] * _180_OVER_PI;
+  angles[X_axis] = angles[X_axis] * 180.0f/PI;
+  angles[Y_axis] = angles[Y_axis] * 180.0f/PI;
   //angles[Z_axis] = angles[Z_axis] * _180_OVER_PI;
 }
 

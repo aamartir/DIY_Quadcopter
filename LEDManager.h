@@ -15,16 +15,16 @@
 
 typedef struct _led_state
 {
-  uint16 value:1; /* ON/OFF */
-  uint16 duration:15; /* In milliseconds */
+  uint16_t value:1; /* ON/OFF */
+  uint16_t duration:15; /* In milliseconds */
 } LED_STATE;
 
 typedef struct _led_pattern
 {
   LED_STATE *pattern;
-  uint8 length;   /* How many LED_STATE members in pattern array */
-  uint8 property; /* INFINITE/REPEAT/ONCE */
-  uint8 repeatCount;
+  uint8_t length;   /* How many LED_STATE members in pattern array */
+  uint8_t property; /* INFINITE/REPEAT/ONCE */
+  uint8_t repeatCount;
 } LED_PATTERN;
 
 /* Patterns */
@@ -32,35 +32,36 @@ extern LED_PATTERN simple_on_off_pattern;
 extern LED_PATTERN SOS_pattern;
 extern LED_PATTERN _1_2_3_pattern;
 extern LED_PATTERN low_batt_pattern;
+extern LED_PATTERN motors_disarmed_pattern;
 
 class LEDManager
 {
   private:
     LED_PATTERN *thisPattern;
-    uint8 stateCount;
-    uint8 repeatCount;
-    uint8 led_pin;	
+    uint8_t stateCount;
+    uint8_t repeatCount;
+    uint8_t led_pin;	
   public:
     LEDManager();
-    LEDManager(LED_PATTERN pattern, uint8 led_pin);
+    LEDManager(LED_PATTERN pattern, uint8_t led_pin);
     ~LEDManager();
 	
     LED_STATE getCurrentLEDState(void);
-    //void setCurrentLEDStateArray(LEDState *stateArray, uint8 length, uint8 property, uint8 repeats);
+    //void setCurrentLEDStateArray(LEDState *stateArray, uint8_t length, uint8_t property, uint8_t repeats);
     LED_PATTERN *getCurrentPattern(void);
-    void setCurrentPattern(LED_PATTERN *pattern, uint8 led_pin);
+    void setCurrentPattern(LED_PATTERN *pattern, uint8_t led_pin);
     void setCurrentPattern(LED_PATTERN *pattern);
 
-    int8 getCurrentLEDStateValue(void);
-    int16 getCurrentLEDStateTime(void);
+    int8_t getCurrentLEDStateValue(void);
+    int16_t getCurrentLEDStateTime(void);
     
-    uint8 getLEDpin(void);
-    void setLEDpin(uint8 pin);
+    uint8_t getLEDpin(void);
+    void setLEDpin(uint8_t pin);
     
-    uint8 patternRepeats(void);
-    void setRepeat(uint8 count);
+    uint8_t patternRepeats(void);
+    void setRepeat(uint8_t count);
     void resetPattern(void);
-    uint8 hasNextStateInPattern(void);
+    uint8_t hasNextStateInPattern(void);
     void nextLEDStateInPattern(void);
 	
 	//void addLEDStateToPattern(LED_STATE newState);

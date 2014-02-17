@@ -14,7 +14,6 @@
 #include "Radio_PCINT.h"
 #include "Sonar.h"
 
-//#define QUAD_DEBUG             1
 //#define ISR_DEBUG              1
 //#define USE_SONAR              1
 //#define SONAR_DEBUG            1
@@ -24,8 +23,8 @@
 //#define RADIO_TEST             1
 
 #ifdef MOTOR_VIBRATION_TEST
-uint8 motor_counter;
-uint16 motors_last_value[MOTORS];
+uint8_t motor_counter;
+uint16_t motors_last_value[MOTORS];
 #endif  
 
 void printAccelData();
@@ -49,9 +48,9 @@ Radio_PCINT radio;
   Sonar sonar;
 #endif
 
-uint16 TIM16_ReadTCNT1( void );
-void TIM16_WriteTCNT1( uint16 val );
-void OCR1A_Write( uint16 val );
+uint16_t TIM16_ReadTCNT1( void );
+void TIM16_WriteTCNT1( uint16_t val );
+void OCR1A_Write( uint16_t val );
 void configurePINS( void );
 void timer2_setup( void );
 
@@ -74,7 +73,7 @@ unsigned int sonar_last_ms = 0;
 unsigned long last_us;
 double dt_ms; 
 double dt_sec;
-uint8 now_ms;
+uint8_t now_ms;
 
 /* Angle control */
 float PID_out[4];     // {roll, pitch, yaw, altitude}
@@ -104,26 +103,23 @@ float PID_out_alt;
 
 float tmp;
 
-uint16 throttle;
+uint16_t throttle;
 
 /////////////////////////////////////////////
 MOTOR_NODE motors[MOTORS];
 MOTOR_NODE middle_buffer[MOTORS];
 volatile MOTOR_NODE ready_buffer[MOTORS];
 
-volatile uint8 buffer_rdy;
-volatile uint8 mCounter;
+volatile uint8_t buffer_rdy;
+volatile uint8_t mCounter;
 
-volatile uint8 cnt1;
-volatile uint8 cnt2;
+volatile uint8_t cnt1;
+volatile uint8_t cnt2;
 /////////////////////////////////////////////
 
 void setup()
 {   
-#ifdef QUAD_DEBUG
-  Serial.begin(BAUD); 
-#endif
-
+  //Serial.begin(BAUD); 
   Wire.begin();
   configurePINS();
   
@@ -149,7 +145,7 @@ void setup()
 
   Serial.print("Powering Gyro... ");
   Gyro.init(ITG3200_ADDR_AD0_LOW);
-  delay(5);
+  delay(10);
   Gyro.zeroCalibrate(500, 10); 
   delay(10);
   Serial.println("OK");
@@ -539,11 +535,18 @@ void loop()
 
 void printAccelData()
 {
+#ifdef IGNORE
    Serial.print(Accel.acceleration[0]);
    Serial.print("\t");
    Serial.print(Accel.acceleration[1]);
    Serial.print("\t");
    Serial.println(Accel.acceleration[2]);
+#endif
+//#ifdef IGNORE
+   Serial.print(Accel.angle[0] * _180_OVER_PI);
+   Serial.print("\t");
+   Serial.println(Accel.angle[1] * _180_OVER_PI);
+//#endif
 }
 
 void printSensorData()
@@ -730,7 +733,7 @@ void timer2_setup()
 ISR( TIMER2_OVF_vect )  /* Executes every millisecond. Routine has to execute fairly quickly, and when I say fairly I mean REALLY quickly. */
 {  
   /* For all timers */
-  uint8 t;
+  uint8_t t;
 
   for(t = 0; t < MAX_TIMERS; t++)
   {
@@ -750,8 +753,8 @@ ISR( TIMER2_OVF_vect )  /* Executes every millisecond. Routine has to execute fa
   }
 }
 
-volatile uint8 sonar_pin_last;
-volatile uint8 barometer_pin_last;
+volatile uint8_t sonar_pin_last;
+volatile uint8_t barometer_pin_last;
 
 ISR( PCINT0_vect ) /* PCINT0_vect (handles portB PCINT) */
 {
@@ -784,10 +787,10 @@ ISR( PCINT0_vect ) /* PCINT0_vect (handles portB PCINT) */
   #endif
 }
   
-uint16 TIM16_ReadTCNT1( void )
+uint16_t TIM16_ReadTCNT1( void )
 {
-  uint8 sreg;
-  uint16 i;
+  uint8_t sreg;
+  uint16_t i;
   
   /* Save global interrupt flag */
   sreg = SREG;
@@ -801,9 +804,9 @@ uint16 TIM16_ReadTCNT1( void )
   return i;
 }
 
-void TIM16_WriteTCNT1( uint16 val )
+void TIM16_WriteTCNT1( uint16_t val )
 {
-  uint8 sreg;
+  uint8_t sreg;
 
   /* Save global interrupt flag */
   sreg = SREG;
@@ -815,9 +818,9 @@ void TIM16_WriteTCNT1( uint16 val )
   SREG = sreg;
 }
 
-void OCR1A_Write( uint16 val )
+void OCR1A_Write( uint16_t val )
 {
-  uint8 sreg;
+  uint8_t sreg;
 
   /* Save global interrupt flag */
   sreg = SREG;
@@ -834,7 +837,7 @@ double mapToDouble(double x, double in_min, double in_max, double out_min, doubl
   return ((x - in_min) * (out_max - out_min)/(in_max - in_min) + out_min);
 }
 
-void gpio_set(uint8 pin)
+void gpio_set(uint8_t pin)
 {
   if(pin >= 8)
     PORTB |= (1 << (pin - 8));
@@ -842,7 +845,7 @@ void gpio_set(uint8 pin)
     PORTD |= (1 << pin);
 }
 
-void gpio_clear(uint8 pin)
+void gpio_clear(uint8_t pin)
 {
   if(pin >= 8)
     PORTB &= ~(1 << (pin - 8));
@@ -850,12 +853,13 @@ void gpio_clear(uint8 pin)
     PORTD &= ~(1 << pin);
 }
 
-void gpio_value(uint8 val, uint8 pin)
+void gpio_value(uint8_t val, uint8_t pin)
 {
   if(val)
     gpio_set(pin);
   else 
     gpio_clear(pin);
 }
+
 
 

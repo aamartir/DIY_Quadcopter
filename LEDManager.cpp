@@ -18,7 +18,7 @@ LEDManager::LEDManager()
   led_pin = BLUE_LED_PIN; /* By default if not pin is given */
 }
 
-LEDManager::LEDManager(LED_PATTERN pattern, uint8 led_gpio)
+LEDManager::LEDManager(LED_PATTERN pattern, uint8_t led_gpio)
 {
   thisPattern = &pattern;
   
@@ -42,7 +42,7 @@ void LEDManager::nextLEDStateInPattern()
   stateCount = ++stateCount % (thisPattern->length);
 }
 
-uint8 LEDManager::hasNextStateInPattern()
+uint8_t LEDManager::hasNextStateInPattern()
 {
   return (stateCount < (thisPattern->length - 1));
 }
@@ -52,7 +52,7 @@ LED_STATE LEDManager::getCurrentLEDState(void)
   return thisPattern->pattern[stateCount];
 }
 
-/*void LEDManager::setCurrentLEDStateArray(LEDState *stateArray, uint8 length, uint8 property, uint8 repeats);
+/*void LEDManager::setCurrentLEDStateArray(LEDState *stateArray, uint8_t length, uint8_t property, uint8_t repeats);
 {
   if(thisPattern)
   {
@@ -65,11 +65,14 @@ LED_PATTERN *LEDManager::getCurrentPattern(void)
   return thisPattern;
 }
 
-void LEDManager::setCurrentPattern(LED_PATTERN *thisPatt, uint8 led_gpio)
+void LEDManager::setCurrentPattern(LED_PATTERN *thisPatt, uint8_t led_gpio)
 { 
   /* Point to the new memory location */
   if(thisPatt)
   {
+    /* Clear LED gpio first */
+    gpio_clear( led_gpio );
+    
     thisPattern = thisPatt;
     stateCount = 0;
     repeatCount = 0;
@@ -96,7 +99,7 @@ void LEDManager::resetPattern()
   }
 }
 
-void LEDManager::setRepeat(uint8 count)
+void LEDManager::setRepeat(uint8_t count)
 {
    if(thisPattern)
    {
@@ -105,7 +108,7 @@ void LEDManager::setRepeat(uint8 count)
    }
  }
  
-int8 LEDManager::getCurrentLEDStateValue(void)
+int8_t LEDManager::getCurrentLEDStateValue(void)
 {
   if(thisPattern)
     return (thisPattern->pattern[stateCount].value);
@@ -113,7 +116,7 @@ int8 LEDManager::getCurrentLEDStateValue(void)
   return -1;
 }
 
-int16 LEDManager::getCurrentLEDStateTime(void)
+int16_t LEDManager::getCurrentLEDStateTime(void)
 {
   if(thisPattern)
     return thisPattern->pattern[stateCount].duration;
@@ -121,17 +124,17 @@ int16 LEDManager::getCurrentLEDStateTime(void)
   return -1;
 }
 
-uint8 LEDManager::getLEDpin(void)
+uint8_t LEDManager::getLEDpin(void)
 {
   return led_pin;
 }
 
-void LEDManager::setLEDpin(uint8 pin)
+void LEDManager::setLEDpin(uint8_t pin)
 {
   led_pin = pin;
 }
     
-uint8 LEDManager::patternRepeats(void)
+uint8_t LEDManager::patternRepeats(void)
 {
   if(thisPattern)
   {
@@ -149,8 +152,8 @@ uint8 LEDManager::patternRepeats(void)
 /* ------------------------------- */
 const LED_STATE simple_on_off_states[] = 
 {
-  { LED_ON, 500 },
-  { LED_OFF, 500 }
+  { LED_ON, 50 },
+  { LED_OFF, 2000 }
 };
 
 const LED_STATE SOS_states[] = 
@@ -201,8 +204,14 @@ const LED_STATE _1_2_3_states[] =
 
 const LED_STATE low_batt_states[] = 
 {
-  { LED_ON, 100 },
-  { LED_OFF, 3000 }
+  { LED_ON,  100 },
+  { LED_OFF, 100 }
+};
+
+const LED_STATE motors_disarmed_states[] = 
+{
+  { LED_ON,  50 },
+  { LED_OFF, 50 }
 };
 
 /* ------------------------------- */
@@ -211,6 +220,14 @@ const LED_STATE low_batt_states[] =
 LED_PATTERN simple_on_off_pattern =
 {
   (LED_STATE *) simple_on_off_states,
+  2,
+  INFINITE_PATTERN,
+  0
+};
+
+LED_PATTERN motors_disarmed_pattern = 
+{
+  (LED_STATE *) motors_disarmed_states,
   2,
   INFINITE_PATTERN,
   0

@@ -1,11 +1,13 @@
+#include "Quad.h"
+
 // PID control algorithm
 #define PID_P_TERM 0
 #define PID_I_TERM 1
 #define PID_D_TERM 2
  
-const float PID_gains_roll[3]     = {35.0, 30.0, 20.0}; // {60.0, 20.0, 15.0};
-const float PID_gains_pitch[3]    = {35.0, 30.0, 20.0};  //
-const float PID_gains_yaw[3]      = {50.0, 0, 40.0}; // {80.0, 0, 50.0};
+const float PID_gains_roll[3]     = {35.0, 20.0, 25.0}; // {50.0, 30.0, 30.0};
+const float PID_gains_pitch[3]    = {35.0, 20.0, 25.0};  //
+const float PID_gains_yaw[3]      = {50.0, 0, 40.0}; // {60.0, 0, 40.0};
 
 //#ifdef USE_SONAR
   const float PID_gains_alt[3]    = {0.5, 0.2, -0.2}; /* Sonar */
@@ -30,6 +32,4 @@ extern float error_int[4];   // {Roll_Integration, Pitch_Int, Yaw_Int}
 extern int target[2];        // {roll, pitch}
 extern double targetHeading;
 extern double headingIncr;
-extern unsigned int throttle;
-extern unsigned int throttle_last;
 extern unsigned short counter;

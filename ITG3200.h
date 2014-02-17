@@ -108,8 +108,7 @@
 #define PLL_EXTERNAL32      4   // 32.768 kHz
 #define PLL_EXTERNAL19      5   // 19.2 Mhz
 
-#define SMOOTH_GYRO_DATA
-
+//#define SMOOTH_GYRO_DATA
 #ifdef SMOOTH_GYRO_DATA
 #define SMOOTH_FACTOR       0.80
 #endif
@@ -135,20 +134,20 @@ public:
   ITG3200();
   
   // Gyro initialization
-  void init(unsigned int address);
-  void init(unsigned int address, uint8 _SRateDiv, uint8 _Range, uint8 _filterBW, uint8 _ClockSrc, bool _ITGReady, bool _INTRawDataReady);      
+  void init(uint8_t address);
+  void init(uint8_t address, uint8_t _SRateDiv, uint8_t _Range, uint8_t _filterBW, uint8_t _ClockSrc, bool _ITGReady, bool _INTRawDataReady);      
     
   // Who Am I
-  uint8 getDevAddr();
-  void setDevAddr(unsigned int _addr);
+  uint8_t getDevAddr();
+  void setDevAddr(uint8_t _addr);
   // Sample Rate Divider
-  uint8 getSampleRateDiv();          
-  void setSampleRateDiv(uint8 _SampleRate);
+  uint8_t getSampleRateDiv();          
+  void setSampleRateDiv(uint8_t _SampleRate);
   // Digital Low Pass Filter BandWidth and SampleRate 
-  uint8 getFSRange();
-  void setFSRange(uint8 _Range); // RANGE2000
-  uint8 getFilterBW(); 
-  void setFilterBW(uint8 _BW); // see register parameters above
+  uint8_t getFSRange();
+  void setFSRange(uint8_t _Range); // RANGE2000
+  uint8_t getFilterBW(); 
+  void setFilterBW(uint8_t _BW); // see register parameters above
   // Interrupt Configuration
   bool isINTActiveOnLow();
   void setINTLogiclvl(bool _State); //ACTIVE_ONHIGH, ACTIVE_ONLOW
@@ -191,11 +190,11 @@ public:
   void setXgyroStandby(bool _Status); // NORMAL, STANDBY
   void setYgyroStandby(bool _Status);
   void setZgyroStandby(bool _Status);
-  uint8 getClockSource();
-  void setClockSource(uint8 _CLKsource); // see register parameters above
+  uint8_t getClockSource();
+  void setClockSource(uint8_t _CLKsource); // see register parameters above
   
-  void writemem(uint8 _addr, uint8 _val);
-  void readmem(uint8 _addr, uint8 _nbytes, uint8 __buff[]);
+  void writemem(uint8_t _addr, uint8_t _val);
+  void readmem(uint8_t _addr, uint8_t _nbytes, uint8_t __buff[]);
   
   int Xaxis();
   int Yaxis();
@@ -203,7 +202,7 @@ public:
   
 private:
 
-  uint8 _dev_address;
-  uint8 _buff[6];      
+  uint8_t _dev_address;
+  uint8_t _buff[6];      
 };
 #endif

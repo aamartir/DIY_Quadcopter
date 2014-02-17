@@ -4,13 +4,6 @@
 #include "arduino.h"
 #include "pins_arduino.h"
 
-#define uint8 unsigned char
-#define int8 char
-#define uint16 unsigned short
-#define int16 short
-#define uint32 unsigned long
-#define int32 long
-
 #define _180_OVER_PI (180/PI)
 #define _PI_OVER_180 (PI/180)
 #define _2_PI (2*PI)
@@ -22,7 +15,7 @@
 #define TO_DEGREES(val) (val*_180_OVER_PI)
 #define TO_RADIANS(val) (val*_PI_OVER_180)
 
-#define BAUD           115200
+#define BAUD           9600
 #define LEDPIN         13
 
 #define ON             1
@@ -106,15 +99,15 @@
 
 typedef struct _motor_node
 {
-  volatile uint16 pwm;
-  volatile uint8 port;
-  uint8 done;
+  volatile uint16_t pwm;
+  volatile uint8_t port;
+  uint8_t done;
 } MOTOR_NODE;
 
 typedef struct _quad
 {
-  uint8 quad_mode;    /* NORMAL_MODE(0), ACCRO_MODE(1), ALTITUDE_HOLD(2), GPS_HOLD(3), AUTOLAND(4) */
-  uint8 motors_armed; /* MOTORS_DISARMED(0), MOTORS_ARMED(1) */
+  uint8_t quad_mode;    /* NORMAL_MODE(0), ACCRO_MODE(1), ALTITUDE_HOLD(2), GPS_HOLD(3), AUTOLAND(4) */
+  uint8_t motors_armed; /* MOTORS_DISARMED(0), MOTORS_ARMED(1) */
 } QUAD_STATE;
 
 /* Keep track of global time */
@@ -132,18 +125,18 @@ extern unsigned int sonarTime_ms;
 extern unsigned int sonar_last_ms;
 
 /* Autoland feature */
-extern volatile uint8 autoLand;
+extern volatile uint8_t autoLand;
 extern QUAD_STATE quad;
-extern uint16 throttle;
+extern uint16_t throttle;
 
 extern void RadioFrameInterrupt();
 extern void setupTimerInterrupt();
 
 // Function declaration
 extern double mapToDouble(double x, double in_min, double in_max, double out_min, double out_max);
-extern void gpio_set(uint8 pin);
-extern void gpio_clear(uint8 pin);
-extern void gpio_value(uint8 val, uint8 pin);
+extern void gpio_set(uint8_t pin);
+extern void gpio_clear(uint8_t pin);
+extern void gpio_value(uint8_t val, uint8_t pin);
 extern void quickSort(MOTOR_NODE * motors, int array_size);
 extern void q_sort(MOTOR_NODE * motors, int left, int right);
 
