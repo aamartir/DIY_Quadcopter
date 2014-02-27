@@ -1,5 +1,5 @@
-Quad_v1.0
-=========
+DIY Quad
+========
 
 Microcontroller: Arduino UNO (atmega328)
 
